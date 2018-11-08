@@ -1,0 +1,130 @@
+import Socket from '/js/socket.js';
+import { MOVING_PLAYER } from '/js/strings.js';
+
+const TILE_ANIMATION_INFO = {
+	DOWN: { start: 0, end: 3 },
+	SIDEPO: { start: 4, end: 7 },
+	SIDEPE: { start: 8, end: 11 },
+	UP: { start: 12, end: 15 },
+};
+
+const ANIMATION_NAME = {
+	UP: 'UP',
+	DOWN: 'DOWN',
+	SIDE: 'SIDE',
+	FLYING: 'FLYING',
+};
+
+const EXTRA_FRAME_CONFIG = {
+	frameRate: 15,
+	repeat: -1,
+};
+
+export default class Player {
+	constructor(scene, x, y, name, isPokemon) {
+		this.scene = scene;
+		this.name = name;
+		this.isPokemon = isPokemon;
+		this.quiet = true;
+		this.sprite = scene.physics.add
+			.sprite(x, y, name)
+			.setScale(isPokemon ? 0.8 : 0.9)
+			.setCollideWorldBounds(true);
+		if (isPokemon) {
+			this.sprite
+				.setSize(30, 20)
+				.setOffset(16, 42);
+		} else {
+			this.sprite
+				.setSize(28, 20)
+				.setOffset(0, 30);
+		}
+		this.cursors = scene.input.keyboard.createCursorKeys();
+		this.speed = {
+			x: 90,
+			y: 90,
+			normalizer: 0.7,
+		}
+		this.generateAnimations(scene.anims, name);
+	}
+
+	generateAnimations(anims, name) {
+		anims.create({
+			key: name + ANIMATION_NAME.UP,
+			frames: anims.generateFrameNumbers(name, TILE_ANIMATION_INFO.UP),
+			...EXTRA_FRAME_CONFIG
+		});
+		anims.create({
+			key: name + ANIMATION_NAME.SIDE,
+			frames: anims.generateFrameNumbers(name, (this.isPokemon ? TILE_ANIMATION_INFO.SIDEPO : TILE_ANIMATION_INFO.SIDEPE)),
+			...EXTRA_FRAME_CONFIG
+		});
+		anims.create({
+			key: name + ANIMATION_NAME.DOWN,
+			frames: anims.generateFrameNumbers(name, TILE_ANIMATION_INFO.DOWN),
+			...EXTRA_FRAME_CONFIG
+		});
+	}
+
+	move(x, y, flip, anim) {
+		this.sprite.setPosition(x, y);
+		if (anim) {
+			this.sprite.play(this.name + anim, true);
+			this.sprite.setFlipX(flip);
+		} else {
+			this.sprite.anims.stop();
+		}
+	}
+
+	run(xfactor, yfactor, flip, anim) {
+		let { x, y } = this.speed;
+		this.sprite.setVelocityX(x * xfactor);
+		this.sprite.setVelocityY(y * yfactor);
+		if (anim) {
+			this.quiet = false;
+			this.sprite.play(this.name + anim, true);
+			this.sprite.setFlipX(flip);
+			Socket.emit(MOVING_PLAYER, { id: Socket.id(), x: this.sprite.x, y: this.sprite.y, flip: flip, anim: anim });
+		} else {
+			if (!this.quiet) {
+				this.quiet = true;
+				Socket.emit(MOVING_PLAYER, { id: Socket.id(), x: this.sprite.x, y: this.sprite.y, flip: flip, anim: null });
+				this.sprite.anims.stop();
+			}
+		}
+	}
+
+	update() {
+		const { normalizer } = this.speed;
+		if (this.cursors.up.isDown) {
+			if (this.cursors.left.isDown) {
+				this.run(-normalizer, -normalizer, !this.isPokemon, ANIMATION_NAME.SIDE);
+			} else if (this.cursors.right.isDown) {
+				this.run(normalizer, -normalizer, this.isPokemon, ANIMATION_NAME.SIDE);
+			} else {
+				this.run(0, -1, false, ANIMATION_NAME.UP);
+			}
+		} else if (this.cursors.left.isDown) {
+			if (this.cursors.down.isDown) {
+				this.run(-normalizer, normalizer, !this.isPokemon, ANIMATION_NAME.SIDE);
+			} else {
+				this.run(-1, 0, !this.isPokemon, ANIMATION_NAME.SIDE);
+			}
+		} else if (this.cursors.right.isDown) {
+			if (this.cursors.down.isDown) {
+				this.run(normalizer, normalizer, this.isPokemon, ANIMATION_NAME.SIDE);
+			} else {
+				this.run(1, 0, this.isPokemon, ANIMATION_NAME.SIDE);
+			}
+		} else if (this.cursors.down.isDown) {
+			this.run(0, 1, false, ANIMATION_NAME.DOWN);
+		} else this.run(0, 0, false, null);
+	}
+
+	destroy() {
+		this.scene.anims.remove(`${this.name}${ANIMATION_NAME.UP}`);
+		this.scene.anims.remove(`${this.name}${ANIMATION_NAME.SIDE}`);
+		this.scene.anims.remove(`${this.name}${ANIMATION_NAME.DOWN}`);
+		this.sprite.destroy();
+	}
+}
