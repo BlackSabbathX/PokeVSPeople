@@ -1,5 +1,6 @@
 
 const Socket = {};
+const actualEvents = [];
 
 Socket.socket = io.connect();
 
@@ -8,11 +9,17 @@ Socket.id = function () {
 }
 
 Socket.on = function (eventName, callback) {
+	actualEvents.push(eventName);
 	Socket.socket.on(eventName, callback);
 };
 
 Socket.emit = function (eventName, args) {
 	Socket.socket.emit(eventName, args);
 };
+
+Socket.removeAllListeners = function () {
+	for (let index = 0; index < actualEvents.length; index++)
+		Socket.socket.removeAllListeners(array[index]);
+}
 
 export default Socket;

@@ -36,6 +36,7 @@ io.on('connection', (socket) => {
 		lobbyPosition: index,
 		onLobby: false,
 		loaded: false,
+		ready: false,
 	};
 
 	lobbyPositions[index].busy = true;
@@ -92,6 +93,19 @@ io.on('connection', (socket) => {
 			id: socket.id,
 			newTeam: newTeam,
 		});
+	});
+
+	socket.on(strings.READY, (id) => {
+		console.log('ready');
+		players[id].ready = true;
+		let readys = 0;
+		Object.keys(players).forEach((key) => {
+			if (players[key].loaded) readys++;
+		});
+		if (readys === playersSize) {
+			socket.emit(strings.ALL_READY);
+			socket.broadcast.emit(strings.ALL_READY);
+		}
 	});
 
 	socket.on(strings.GAME_LOADED, (id) => {

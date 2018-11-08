@@ -4,7 +4,8 @@ import {
 	PLAYER_MOVED,
 	GAME_LOADED,
 	LOAD_COMPLETE,
-	POKEMON
+	POKEMON,
+	DISCONNECT
 } from '/js/strings.js';
 
 export default class GameScene extends Phaser.Scene {
@@ -27,11 +28,11 @@ export default class GameScene extends Phaser.Scene {
 		const collideLayer = map.createStaticLayer('collide', tilesets);
 		collideLayer.setCollisionByProperty({ collides: true });
 		this.spawnPoint = this.getSpawnPoints(map);
-		Socket.emit(GAME_LOADED, Socket.id());
 		Socket.on(LOAD_COMPLETE, (players) => {
 			this.players = players;
 			this.createPlayers(map, tilesets, collideLayer);
 		});
+		Socket.emit(GAME_LOADED, Socket.id());
 	}
 
 	updatePlayer(player) {
@@ -53,8 +54,15 @@ export default class GameScene extends Phaser.Scene {
 		map.createStaticLayer('visual', tilesets);
 		this.collideWith(this.principalPlayer.sprite, collideLayer);
 		this.playerLoaded = true;
+
 		Socket.on(PLAYER_MOVED, (player) => {
 			this.updatePlayer(player);
+		});
+
+		Socket.on(DISCONNECT, (id) => {
+			this.playersSprites[id].destroy();
+			delete this.players[id];
+			delete this.playersSprites[id];
 		});
 	}
 
@@ -82,5 +90,6 @@ export default class GameScene extends Phaser.Scene {
 			this.playersSprites[key].destroy();
 		});
 		this.principalPlayer.destroy();
+		Socket.removeAllListeners();
 	}
 }

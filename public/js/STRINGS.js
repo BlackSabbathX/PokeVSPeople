@@ -10,6 +10,8 @@ const DISCONNECT = 'disconnect';
 const LOBBY_ENTER = 'LOBBY_ENTER';
 const PLAYER_MOVED = 'PLAYER_MOVED';
 const MOVING_PLAYER = 'MOVING_PLAYER';
+const READY = 'READY';
+const ALL_READY = 'ALL_READY';
 const PEOPLE = 'people';
 const POKEMON = 'pokemon';
 
@@ -28,4 +30,6 @@ export {
 	POKEMON,
 	PLAYER_MOVED,
 	MOVING_PLAYER,
+	READY,
+	ALL_READY
 };

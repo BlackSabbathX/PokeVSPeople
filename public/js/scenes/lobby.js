@@ -8,7 +8,9 @@ import {
 	CHARACTER_CHANGED,
 	TEAM_CHANGED,
 	TOOGLE_TEAM,
-	LOBBY_ENTER
+	LOBBY_ENTER,
+	READY,
+	ALL_READY
 } from '/js/strings.js';
 
 export default class Lobby extends Phaser.Scene {
@@ -69,6 +71,13 @@ export default class Lobby extends Phaser.Scene {
 			delete this.players[id];
 			this.nPlayers--;
 		});
+
+		Socket.on(ALL_READY, () => {
+			const cam = this.cameras.main;
+			cam.shake(200);
+			this.disableButtonListeners();
+			cam.once('camerashakecomplete', () => this.scene.start('game-scene'));
+		})
 
 		this.input.keyboard.on('keydown_LEFT', () => {
 			Socket.emit(CHANGE_CHARACTER, this.player.character - 1);
@@ -133,20 +142,14 @@ export default class Lobby extends Phaser.Scene {
 	}
 
 	pointerDown(button) {
-		const cam = this.cameras.main;
 		if (button === this.playButton) {
-			cam.shake(200);
-			this.disableButtonListeners();
-			cam.once('camerashakecomplete', () => this.scene.start('game-scene'));
+			Socket.emit(READY, Socket.id());
 		}
 	}
 
 	disableButtonListeners() {
+		Socket.removeAllListeners();
 		this.playButton.removeAllListeners('pointerover');
 		this.playButton.removeAllListeners('pointerout');
-	}
-
-	destroy() {
-		this.didisableButtonListeners();
 	}
 }
