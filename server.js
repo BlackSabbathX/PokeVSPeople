@@ -1,5 +1,5 @@
-var strings = require('./strings.js');
-
+"use strict"
+let strings = require('./strings.js');
 const express = require('express');
 const app = express();
 const server = require('http').Server(app);
@@ -100,7 +100,7 @@ io.on('connection', (socket) => {
 		players[id].ready = true;
 		let readys = 0;
 		Object.keys(players).forEach((key) => {
-			if (players[key].loaded) readys++;
+			if (players[key].ready) readys++;
 		});
 		if (readys === playersSize) {
 			socket.emit(strings.ALL_READY);

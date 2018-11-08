@@ -10,7 +10,7 @@ import {
 	TOOGLE_TEAM,
 	LOBBY_ENTER,
 	READY,
-	ALL_READY
+	ALL_READY,
 } from '/js/strings.js';
 
 export default class Lobby extends Phaser.Scene {
@@ -75,8 +75,11 @@ export default class Lobby extends Phaser.Scene {
 		Socket.on(ALL_READY, () => {
 			const cam = this.cameras.main;
 			cam.shake(200);
-			this.disableButtonListeners();
-			cam.once('camerashakecomplete', () => this.scene.start('game-scene'));
+			cam.once('camerashakecomplete', () => {
+				this.disableButtonListeners();
+				console.log('start game');
+				this.scene.start('game-scene');
+			});
 		})
 
 		this.input.keyboard.on('keydown_LEFT', () => {

@@ -19,7 +19,7 @@ Socket.emit = function (eventName, args) {
 
 Socket.removeAllListeners = function () {
 	for (let index = 0; index < actualEvents.length; index++)
-		Socket.socket.removeAllListeners(array[index]);
+		Socket.socket.removeAllListeners(actualEvents[index]);
 }
 
 export default Socket;
