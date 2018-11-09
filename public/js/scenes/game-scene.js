@@ -60,9 +60,12 @@ export default class GameScene extends Phaser.Scene {
 		});
 
 		Socket.on(DISCONNECT, (id) => {
-			this.playersSprites[id].destroy();
-			delete this.players[id];
-			delete this.playersSprites[id];
+			const sprite = this.playersSprites[id];
+			if (sprite) {
+				sprite.destroy();
+				delete this.players[id];
+				delete this.playersSprites[id];
+			}
 		});
 	}
 

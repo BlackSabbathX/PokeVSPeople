@@ -5,30 +5,17 @@ export default class Menu extends Phaser.Scene {
 
 	create() {
 		this.cameras.main.fadeIn(70);
-		const heightProportion = 1080 / window.innerHeight;
-		const widthProportion = 1920 / window.innerWidth;
+		const widthProportion = this.game.config.width / 1920;
 		this.add
-			.image(0, 0, 'bg-1')
-			.setScale(
-				heightProportion > widthProportion ?
-					heightProportion :
-					widthProportion
-			);
-		this.add.bitmapText(50, 50, 'font', 'Pokemon VS People :v', 70 * widthProportion);
-		this.playButton = this.add
-			.bitmapText(50, 300, 'font', 'Conectarse a la partida', 40 * widthProportion)
-			.setTint(0x000000)
-			.setInteractive()
+			.image(1920 / 3, 1080 / 3.5	, 'bg-1')
+			.setScale(widthProportion);
+		const pb = this.playButton = this.add
+			.bitmapText(0, 0, 'font', 'Conectarse a la partida', 40 * widthProportion);
+		pb.setPosition(this.game.config.width / 2.6, this.game.config.height - 100);
+		pb.setInteractive()
 			.on('pointerover', () => this.pointerOver(this.playButton))
 			.on('pointerout', () => this.pointerOut(this.playButton))
 			.once('pointerdown', () => this.pointerDown(this.playButton));
-		this.creditButton = this.add
-			.bitmapText(50, 380, 'font', 'Creditos', 40 * widthProportion)
-			.setTint(0x000000)
-			.setInteractive()
-			.on('pointerover', () => this.pointerOver(this.creditButton))
-			.on('pointerout', () => this.pointerOut(this.creditButton))
-			.once('pointerdown', () => this.pointerDown(this.creditButton));
 	}
 
 	pointerOver(button) {
@@ -36,7 +23,7 @@ export default class Menu extends Phaser.Scene {
 	}
 
 	pointerOut(button) {
-		button.setTint(0x000000);
+		button.setTint(0xffffff);
 	}
 
 	pointerDown(button) {
@@ -51,8 +38,6 @@ export default class Menu extends Phaser.Scene {
 	disableButtonListeners() {
 		this.playButton.removeAllListeners('pointerover');
 		this.playButton.removeAllListeners('pointerout');
-		this.creditButton.removeAllListeners('pointerover');
-		this.creditButton.removeAllListeners('pointerout');
 	}
 
 	destroy() {
