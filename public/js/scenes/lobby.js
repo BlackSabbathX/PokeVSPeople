@@ -24,8 +24,8 @@ export default class Lobby extends Phaser.Scene {
 	create() {
 		const map = this.make.tilemap({ key: 'lobby' });
 		const tilesets = [
-			map.addTilesetImage('gyms-tileset', 'gyms-tileset'),
-			map.addTilesetImage('numbers-tileset', 'numbers-tileset'),
+			map.addTilesetImage('gym-tileset', 'gym-tileset'),
+			map.addTilesetImage('number-tileset', 'number-tileset'),
 		];
 		map.createStaticLayer('lobby', tilesets);
 		map.createStaticLayer('hover', tilesets);
@@ -77,7 +77,6 @@ export default class Lobby extends Phaser.Scene {
 			cam.shake(200);
 			cam.once('camerashakecomplete', () => {
 				this.disableButtonListeners();
-				console.log('start game');
 				this.scene.start('game-scene');
 			});
 		})
@@ -146,7 +145,7 @@ export default class Lobby extends Phaser.Scene {
 
 	pointerDown(button) {
 		if (button === this.playButton) {
-			Socket.emit(READY, Socket.id());
+			Socket.emit(READY);
 		}
 	}
 

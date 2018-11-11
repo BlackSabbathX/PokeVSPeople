@@ -51,8 +51,8 @@
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":213.333333333333,
-                 "y":108
+                 "x":189.333333333333,
+                 "y":116
                 }, 
                 {
                  "height":0,
@@ -63,8 +63,32 @@
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":984,
-                 "y":110.666666666666
+                 "x":270,
+                 "y":116.666666666666
+                }, 
+                {
+                 "height":0,
+                 "id":13,
+                 "name":"",
+                 "point":true,
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":966,
+                 "y":116
+                }, 
+                {
+                 "height":0,
+                 "id":14,
+                 "name":"",
+                 "point":true,
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":1014,
+                 "y":116
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -73,7 +97,7 @@
          "y":0
         }],
  "nextlayerid":13,
- "nextobjectid":13,
+ "nextobjectid":15,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.2.0",
@@ -86,7 +110,7 @@
          "imageheight":4608,
          "imagewidth":256,
          "margin":0,
-         "name":"gyms-tileset",
+         "name":"gym-tileset",
          "spacing":0,
          "tilecount":1152,
          "tileheight":32,

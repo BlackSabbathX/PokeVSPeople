@@ -23,12 +23,22 @@ export default class Preloader extends Phaser.Scene {
 
 	loadAssets() {
 		this.load.image('bg-1', 'assets/images/bg.jpg');
-		this.load.image('numbers-tileset', 'assets/maps/tileset/numbers-tileset.png');
-		this.load.image('gyms-tileset', 'assets/maps/tileset/gyms-tileset.png');
+		this.load.image('number-tileset', 'assets/maps/tileset/number-tileset.png');
+		this.load.image('gym-tileset', 'assets/maps/tileset/gym-tileset.png');
 		this.load.image('interior-tileset', 'assets/maps/tileset/interior-tileset.png');
 		this.load.image('outside-tileset', 'assets/maps/tileset/outside-tileset.png');
-		this.load.tilemapTiledJSON('tilemap', 'assets/maps/map.json');
+		this.load.image('graveyard-tileset', 'assets/maps/tileset/graveyard-tileset.png');
+		this.load.tilemapTiledJSON('outside-map', 'assets/maps/map.json');
+		this.load.tilemapTiledJSON('graveyard-map', 'assets/maps/graveyard map.json');
 		this.load.tilemapTiledJSON('lobby', 'assets/maps/lobby.json');
+		this.load.spritesheet('bomb', 'assets/images/bomb/bomb.png', { frameWidth: 32, frameHeight: 32 });
+		this.load.spritesheet('explosion-center', 'assets/images/bomb/explosion-center.png', { frameWidth: 32, frameHeight: 32 });
+		this.load.spritesheet('explosion-down', 'assets/images/bomb/explosion-down.png', { frameWidth: 32, frameHeight: 32 });
+		this.load.spritesheet('explosion-left', 'assets/images/bomb/explosion-left.png', { frameWidth: 32, frameHeight: 32 });
+		this.load.spritesheet('explosion-mid-h', 'assets/images/bomb/explosion-mid-h.png', { frameWidth: 32, frameHeight: 32 });
+		this.load.spritesheet('explosion-mid-v', 'assets/images/bomb/explosion-mid-v.png', { frameWidth: 32, frameHeight: 32 });
+		this.load.spritesheet('explosion-right', 'assets/images/bomb/explosion-right.png', { frameWidth: 32, frameHeight: 32 });
+		this.load.spritesheet('explosion-up', 'assets/images/bomb/explosion-up.png', { frameWidth: 32, frameHeight: 32 });
 		for (let index = 1; index <= 63; index++) {
 			this.load.spritesheet(
 				`people_${index}`,

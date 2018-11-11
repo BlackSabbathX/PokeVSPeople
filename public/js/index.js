@@ -1,3 +1,4 @@
+
 import Boot from '/js/scenes/boot.js';
 import Preloader from '/js/scenes/preloader.js';
 import Menu from '/js/scenes/menu.js';
@@ -7,7 +8,7 @@ import GameScene from '/js/scenes/game-scene.js';
 const config = {
 	type: Phaser.AUTO,
 	width: 1216,
-	height: window.innerHeight,
+	height: 704 < window.innerHeight ? 704 : window.innerHeight,
 	scene: [
 		Boot,
 		Preloader,

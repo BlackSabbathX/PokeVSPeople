@@ -13,13 +13,14 @@ Socket.on = function (eventName, callback) {
 	Socket.socket.on(eventName, callback);
 };
 
-Socket.emit = function (eventName, args) {
+Socket.emit = async function (eventName, args) {
 	Socket.socket.emit(eventName, args);
 };
 
 Socket.removeAllListeners = function () {
 	for (let index = 0; index < actualEvents.length; index++)
 		Socket.socket.removeAllListeners(actualEvents[index]);
+		
 }
 
 export default Socket;

@@ -1,51 +1,81 @@
-import Socket from '/js/socket.js';
-import { MOVING_PLAYER } from '/js/strings.js';
+import Socket from "/js/socket.js";
+import Bomb from "/js/graphics/bomb.js";
+import Stats from "/js/graphics/stats.js";
+import { MOVING_PLAYER, PLANTING_BOMB } from "/js/strings.js";
 
 const TILE_ANIMATION_INFO = {
 	DOWN: { start: 0, end: 3 },
 	SIDEPO: { start: 4, end: 7 },
 	SIDEPE: { start: 8, end: 11 },
-	UP: { start: 12, end: 15 },
+	UP: { start: 12, end: 15 }
 };
 
 const ANIMATION_NAME = {
-	UP: 'UP',
-	DOWN: 'DOWN',
-	SIDE: 'SIDE',
-	FLYING: 'FLYING',
+	UP: "UP",
+	DOWN: "DOWN",
+	SIDE: "SIDE",
+	FLYING: "FLYING"
 };
 
 const EXTRA_FRAME_CONFIG = {
 	frameRate: 15,
-	repeat: -1,
+	repeat: -1
 };
 
 export default class Player {
-	constructor(scene, x, y, name, isPokemon) {
+	constructor(
+		scene,
+		x,
+		y,
+		name,
+		isPokemon,
+		isPrincipal,
+		baseLayer,
+		stats,
+		collideLayer,
+		rocksLayer
+	) {
 		this.scene = scene;
 		this.name = name;
 		this.isPokemon = isPokemon;
 		this.quiet = true;
+		this.baseLayer = baseLayer;
+		this.collideLayer = collideLayer;
+		this.rocksLayer = rocksLayer;
+		this.stats = new Stats(stats);
+		this.bomb = new Bomb(this.scene, this.stats);
 		this.sprite = scene.physics.add
 			.sprite(x, y, name)
 			.setScale(isPokemon ? 0.8 : 0.9)
-			.setCollideWorldBounds(true);
+			.setCollideWorldBounds(true)
+			.setDepth(999);
 		if (isPokemon) {
-			this.sprite
-				.setSize(30, 20)
-				.setOffset(16, 42);
+			this.sprite.setSize(30, 20).setOffset(16, 42);
 		} else {
-			this.sprite
-				.setSize(28, 20)
-				.setOffset(0, 30);
+			this.sprite.setSize(28, 20).setOffset(0, 30);
 		}
 		this.cursors = scene.input.keyboard.createCursorKeys();
-		this.speed = {
-			x: 90,
-			y: 90,
-			normalizer: 0.7,
-		}
 		this.generateAnimations(scene.anims, name);
+		if (isPrincipal)
+			scene.input.keyboard.on("keydown_SPACE", this.plantBomb, this);
+	}
+
+	plantBomb() {
+		if (this.bomb.planted) return;
+		const tile = this.baseLayer.getTileAtWorldXY(
+			this.sprite.x,
+			this.sprite.y + 15
+		);
+		const info = {
+			x: tile.getCenterX(),
+			y: tile.getCenterY()
+		};
+		Socket.emit(PLANTING_BOMB, info);
+	}
+
+	putBomb(info) {
+		const { x, y, auto } = info;
+		this.bomb.putAt(x, y, auto, this.collideLayer, this.rocksLayer);
 	}
 
 	generateAnimations(anims, name) {
@@ -56,7 +86,12 @@ export default class Player {
 		});
 		anims.create({
 			key: name + ANIMATION_NAME.SIDE,
-			frames: anims.generateFrameNumbers(name, (this.isPokemon ? TILE_ANIMATION_INFO.SIDEPO : TILE_ANIMATION_INFO.SIDEPE)),
+			frames: anims.generateFrameNumbers(
+				name,
+				this.isPokemon
+					? TILE_ANIMATION_INFO.SIDEPO
+					: TILE_ANIMATION_INFO.SIDEPE
+			),
 			...EXTRA_FRAME_CONFIG
 		});
 		anims.create({
@@ -77,42 +112,71 @@ export default class Player {
 	}
 
 	run(xfactor, yfactor, flip, anim) {
-		let { x, y } = this.speed;
-		this.sprite.setVelocityX(x * xfactor);
-		this.sprite.setVelocityY(y * yfactor);
+		let { speedX, speedY } = this.stats;
+		this.sprite.setVelocityX(speedX * xfactor);
+		this.sprite.setVelocityY(speedY * yfactor);
 		if (anim) {
 			this.quiet = false;
 			this.sprite.play(this.name + anim, true);
 			this.sprite.setFlipX(flip);
-			Socket.emit(MOVING_PLAYER, { id: Socket.id(), x: this.sprite.x, y: this.sprite.y, flip: flip, anim: anim });
+			Socket.emit(MOVING_PLAYER, {
+				x: this.sprite.x,
+				y: this.sprite.y,
+				flip: flip,
+				anim: anim
+			});
 		} else {
 			if (!this.quiet) {
 				this.quiet = true;
-				Socket.emit(MOVING_PLAYER, { id: Socket.id(), x: this.sprite.x, y: this.sprite.y, flip: flip, anim: null });
+				Socket.emit(MOVING_PLAYER, {
+					x: this.sprite.x,
+					y: this.sprite.y,
+					flip: flip,
+					anim: null
+				});
 				this.sprite.anims.stop();
 			}
 		}
 	}
 
 	update() {
-		const { normalizer } = this.speed;
 		if (this.cursors.up.isDown) {
 			if (this.cursors.left.isDown) {
-				this.run(-normalizer, -normalizer, !this.isPokemon, ANIMATION_NAME.SIDE);
+				this.run(
+					-this.stats.speedNormalizer,
+					-this.stats.speedNormalizer,
+					!this.isPokemon,
+					ANIMATION_NAME.SIDE
+				);
 			} else if (this.cursors.right.isDown) {
-				this.run(normalizer, -normalizer, this.isPokemon, ANIMATION_NAME.SIDE);
+				this.run(
+					this.stats.speedNormalizer,
+					-this.stats.speedNormalizer,
+					this.isPokemon,
+					ANIMATION_NAME.SIDE
+				);
 			} else {
 				this.run(0, -1, false, ANIMATION_NAME.UP);
 			}
 		} else if (this.cursors.left.isDown) {
 			if (this.cursors.down.isDown) {
-				this.run(-normalizer, normalizer, !this.isPokemon, ANIMATION_NAME.SIDE);
+				this.run(
+					-this.stats.speedNormalizer,
+					this.stats.speedNormalizer,
+					!this.isPokemon,
+					ANIMATION_NAME.SIDE
+				);
 			} else {
 				this.run(-1, 0, !this.isPokemon, ANIMATION_NAME.SIDE);
 			}
 		} else if (this.cursors.right.isDown) {
 			if (this.cursors.down.isDown) {
-				this.run(normalizer, normalizer, this.isPokemon, ANIMATION_NAME.SIDE);
+				this.run(
+					this.stats.speedNormalizer,
+					this.stats.speedNormalizer,
+					this.isPokemon,
+					ANIMATION_NAME.SIDE
+				);
 			} else {
 				this.run(1, 0, this.isPokemon, ANIMATION_NAME.SIDE);
 			}
