@@ -23,27 +23,14 @@ const EXTRA_FRAME_CONFIG = {
 };
 
 export default class Player {
-	constructor(
-		scene,
-		x,
-		y,
-		name,
-		isPokemon,
-		isPrincipal,
-		baseLayer,
-		stats,
-		collideLayer,
-		rocksLayer
-	) {
+	constructor(scene, x, y, name, isPokemon, isPrincipal, stats, map) {
 		this.scene = scene;
 		this.name = name;
 		this.isPokemon = isPokemon;
 		this.quiet = true;
-		this.baseLayer = baseLayer;
-		this.collideLayer = collideLayer;
-		this.rocksLayer = rocksLayer;
+		this.map = map;
 		this.stats = new Stats(stats);
-		this.bomb = new Bomb(this.scene, this.stats);
+		this.bomb = new Bomb(this.scene, this.stats, this.map);
 		this.sprite = scene.physics.add
 			.sprite(x, y, name)
 			.setScale(isPokemon ? 0.8 : 0.9)
@@ -62,20 +49,18 @@ export default class Player {
 
 	plantBomb() {
 		if (this.bomb.planted) return;
-		const tile = this.baseLayer.getTileAtWorldXY(
+		const tile = this.map.getTileAtWorldXY(
 			this.sprite.x,
 			this.sprite.y + 15
 		);
-		const info = {
+		Socket.emit(PLANTING_BOMB, {
 			x: tile.getCenterX(),
 			y: tile.getCenterY()
-		};
-		Socket.emit(PLANTING_BOMB, info);
+		});
 	}
 
 	putBomb(info) {
-		const { x, y, auto } = info;
-		this.bomb.putAt(x, y, auto, this.collideLayer, this.rocksLayer);
+		this.bomb.putAt(info.x, info.y, info.auto);
 	}
 
 	generateAnimations(anims, name) {

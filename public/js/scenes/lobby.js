@@ -1,5 +1,6 @@
-import Character from '/js/graphics/character.js';
-import Socket from '/js/socket.js';
+import Character from "/js/graphics/character.js";
+import Map from "/js/graphics/map.js";
+import Socket from "/js/socket.js";
 import {
 	CURRENT_PLAYERS,
 	NEW_PLAYER,
@@ -10,40 +11,35 @@ import {
 	TOOGLE_TEAM,
 	LOBBY_ENTER,
 	READY,
-	ALL_READY,
-} from '/js/strings.js';
+	ALL_READY
+} from "/js/strings.js";
 
 export default class Lobby extends Phaser.Scene {
 	constructor() {
-		super({ key: 'lobby' });
+		super({ key: "lobby" });
 		this.players = {};
 		this.sprites = {};
 		this.nPlayers = 0;
 	}
 
 	create() {
-		const map = this.make.tilemap({ key: 'lobby' });
-		const tilesets = [
-			map.addTilesetImage('gym-tileset', 'gym-tileset'),
-			map.addTilesetImage('number-tileset', 'number-tileset'),
-		];
-		map.createStaticLayer('lobby', tilesets);
-		map.createStaticLayer('hover', tilesets);
-		const spawnPoints = this.getSpawnPoints(map);
+		const map = new Map(this, "lobby", ["multiplayer-room"]);
+		const spawnPoints = map.getSpawnPoints();
 
-		Socket.on(CURRENT_PLAYERS, (players) => {
+		Socket.on(CURRENT_PLAYERS, players => {
 			this.players = players;
-			this.nPlayers++;
+			this.nPlayers = Object.keys(players).length;
 			this.createCharacters(spawnPoints);
 			this.player = players[Socket.id()];
 		});
 
-		Socket.on(NEW_PLAYER, (player) => {
+		Socket.on(NEW_PLAYER, player => {
 			this.players[player.id] = player;
+			this.nPlayers++;
 			this.createCharacter(player, spawnPoints);
 		});
 
-		Socket.on(CHARACTER_CHANGED, (change) => {
+		Socket.on(CHARACTER_CHANGED, change => {
 			const { id, newCharacter } = change;
 			if (id === this.player.id) {
 				this.player.character = newCharacter;
@@ -54,63 +50,72 @@ export default class Lobby extends Phaser.Scene {
 			this.createCharacter(this.players[id], spawnPoints);
 		});
 
-		Socket.on(TEAM_CHANGED, (change) => {
-			const { id, newTeam } = change;
+		Socket.on(TEAM_CHANGED, change => {
+			const { id, newTeam, newCharacter } = change;
 			if (id === this.player.id) {
 				this.player.team = newTeam;
 			}
 			this.players[id].team = newTeam;
+			this.players[id].character = newCharacter;
 			this.sprites[id].destroy();
 			delete this.sprites[id];
 			this.createCharacter(this.players[id], spawnPoints);
 		});
 
-		Socket.on(DISCONNECT, (id) => {
+		Socket.on(DISCONNECT, id => {
 			this.sprites[id].destroy();
 			delete this.sprites[id];
 			delete this.players[id];
 			this.nPlayers--;
 		});
 
-		Socket.on(ALL_READY, () => {
+		Socket.on(ALL_READY, map => {
 			const cam = this.cameras.main;
-			cam.shake(200);
-			cam.once('camerashakecomplete', () => {
+			cam.shake(200, 0.02);
+			cam.once("camerashakecomplete", () => {
 				this.disableButtonListeners();
-				this.scene.start('game-scene');
+				this.scene.start("game-scene", map);
 			});
-		})
+		});
 
-		this.input.keyboard.on('keydown_LEFT', () => {
+		this.input.keyboard.on("keydown_LEFT", () => {
 			Socket.emit(CHANGE_CHARACTER, this.player.character - 1);
 		});
 
-		this.input.keyboard.on('keydown_RIGHT', () => {
+		this.input.keyboard.on("keydown_RIGHT", () => {
 			Socket.emit(CHANGE_CHARACTER, this.player.character + 1);
 		});
 
-		this.input.keyboard.on('keydown_SPACE', () => {
+		this.input.keyboard.on("keydown_SPACE", () => {
 			Socket.emit(TOOGLE_TEAM);
 		});
+		const widthProportion = this.game.config.width / 1920;
 
-		const widthProportion = 1920 / window.innerWidth;
 		this.playButton = this.add
-			.bitmapText(50, 300, 'font', 'Conectarse a la partida', 40 * widthProportion)
-			.setTint(0x000000)
+			.bitmapText(0, 0, "font", "Listo", 40 * widthProportion)
+			.setPosition(
+				this.game.config.width / 2.05,
+				this.game.config.height - 100
+			)
 			.setInteractive()
-			.on('pointerover', () => this.pointerOver(this.playButton))
-			.on('pointerout', () => this.pointerOut(this.playButton))
-			.once('pointerdown', () => this.pointerDown(this.playButton));
+			.on("pointerover", () => this.pointerOver(this.playButton))
+			.on("pointerout", () => this.pointerOut(this.playButton))
+			.once("pointerdown", () => this.pointerDown(this.playButton));
 
 		Socket.emit(LOBBY_ENTER);
 	}
 
 	createCharacters(spawnPoints) {
-		Object.keys(this.players).forEach((id) => {
+		Object.keys(this.players).forEach(id => {
 			const player = this.players[id];
 			if (player.onLobby) {
 				const sp = spawnPoints[player.lobbyPosition];
-				this.sprites[id] = new Character(this, sp.x, sp.y, `${player.team}_${player.character}`);
+				this.sprites[id] = new Character(
+					this,
+					sp.x,
+					sp.y,
+					`${player.team}-${player.character}`
+				);
 				this.nPlayers++;
 			}
 		});
@@ -118,21 +123,12 @@ export default class Lobby extends Phaser.Scene {
 
 	createCharacter(player, spawnPoints) {
 		const sp = spawnPoints[player.lobbyPosition];
-		this.sprites[player.id] = new Character(this, sp.x, sp.y, `${player.team}_${player.character}`);
-	}
-
-	getSpawnPoints(map) {
-		const pos = map.getObjectLayer('positions');
-		const p1sp = pos.objects[0];
-		const p2sp = pos.objects[1];
-		const p3sp = pos.objects[2];
-		const p4sp = pos.objects[3];
-		return [
-			{ x: p1sp.x, y: p1sp.y, busy: false },
-			{ x: p2sp.x, y: p2sp.y, busy: false },
-			{ x: p3sp.x, y: p3sp.y, busy: false },
-			{ x: p4sp.x, y: p4sp.y, busy: false },
-		];
+		this.sprites[player.id] = new Character(
+			this,
+			sp.x,
+			sp.y,
+			`${player.team}-${player.character}`
+		);
 	}
 
 	pointerOver(button) {
@@ -145,13 +141,19 @@ export default class Lobby extends Phaser.Scene {
 
 	pointerDown(button) {
 		if (button === this.playButton) {
+			this.playButton
+				.setText("Esperando a los demás...")
+				.setPosition(
+					this.game.config.width / 2.6,
+					this.game.config.height - 100
+				);
 			Socket.emit(READY);
 		}
 	}
 
 	disableButtonListeners() {
 		Socket.removeAllListeners();
-		this.playButton.removeAllListeners('pointerover');
-		this.playButton.removeAllListeners('pointerout');
+		this.playButton.removeAllListeners("pointerover");
+		this.playButton.removeAllListeners("pointerout");
 	}
 }

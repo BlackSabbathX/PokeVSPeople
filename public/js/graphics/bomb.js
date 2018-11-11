@@ -2,17 +2,18 @@ import Socket from "/js/socket.js";
 import { BOMB_EXPLODING } from "/js/strings.js";
 
 export default class Bomb {
-	constructor(scene, stats) {
+	constructor(scene, stats, map) {
 		this.scene = scene;
-		this.planted = false;
 		this.stats = stats;
+		this.map = map;
+		this.planted = false;
 		this.sprite = scene.physics.add
 			.sprite(-5, -5, "bomb")
 			.disableBody(false, true);
 		this.explosion = scene.physics.add.group();
 	}
 
-	putAt(x, y, autoExplodes, collideLayer, rocksLayer) {
+	putAt(x, y, autoExplodes) {
 		if (this.planted) return false;
 		this.planted = true;
 		this.sprite
@@ -22,16 +23,17 @@ export default class Bomb {
 		if (autoExplodes)
 			setTimeout(
 				() =>
-					this.calcMaxins(collideLayer, rocksLayer, x, y).then(
-						constraints =>
-							this.explode(constraints, true, rocksLayer)
+					this.calcMaxins(x, y).then(constraints =>
+						this.explode(constraints, true)
 					),
 				this.stats.explosionTime - 50,
 				this
 			);
 	}
 
-	async calcMaxins(collideLayer, rocksLayer, xW, yW) {
+	async calcMaxins(xW, yW) {
+		const collideLayer = this.map.collide;
+		const rocksLayer = this.map.rocks;
 		let constraints = {
 			toBreak: [],
 			x: xW,
@@ -89,7 +91,7 @@ export default class Bomb {
 		return constraints;
 	}
 
-	explode(constraints, autoExplodes, rocksLayer) {
+	explode(constraints, autoExplodes) {
 		if (autoExplodes) Socket.emit(BOMB_EXPLODING, constraints);
 		this.planted = false;
 		this.scene.cameras.main.shake(500, this.stats.shakeRate);
@@ -120,6 +122,7 @@ export default class Bomb {
 			}
 		}
 		const { toBreak } = constraints;
+		const rocksLayer = this.map.rocks;
 		for (let index = 0; index < toBreak.length; index++) {
 			const { x, y } = toBreak[index];
 			rocksLayer.removeTileAtWorldXY(x, y);

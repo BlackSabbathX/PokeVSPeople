@@ -5,6 +5,25 @@ const app = express();
 const server = require("http").Server(app);
 const io = require("socket.io").listen(server);
 
+const maps = [
+	{ name: "cave", tilesets: ["caves", "gym"] },
+	{ name: "graveyard", tilesets: ["graveyard", "gym"] },
+	{ name: "gym", tilesets: ["gym"] },
+	{ name: "mart", tilesets: ["mart", "gym"] },
+	{ name: "outside", tilesets: ["outside"] },
+	{ name: "spring", tilesets: ["interior", "outside", "gym"] },
+	{
+		name: "trainer-tower",
+		tilesets: ["bike-shop", "harbour", "trainer-tower", "gym"]
+	},
+	{ name: "underwater", tilesets: ["harbour", "underwater", "gym"] }
+];
+
+const max = {
+	pokemon: 43,
+	people: 63
+};
+
 const teams = {
 	next: strings.PEOPLE,
 	last: strings.POKEMON,
@@ -18,7 +37,7 @@ const initialStats = {
 		range: 1
 	},
 	pokemon: {
-		speed: 60,
+		speed: 50,
 		range: 2
 	}
 };
@@ -41,7 +60,7 @@ io.on("connection", socket => {
 	players[socket.id] = {
 		team: teams.next,
 		id: socket.id,
-		character: 1,
+		character: Math.floor(Math.random() * max[teams.next]) + 1,
 		lobbyPosition: index,
 		onLobby: false,
 		loaded: false,
@@ -51,7 +70,8 @@ io.on("connection", socket => {
 	lobbyPositions[index].busy = true;
 	teams[teams.next]++;
 	playersSize++;
-	console.log(playersSize);
+
+	console.log("players", players);
 
 	const tempLast = teams.next;
 	teams.next = teams.last;
@@ -65,12 +85,8 @@ io.on("connection", socket => {
 
 	socket.on(strings.CHANGE_CHARACTER, newCharacter => {
 		const player = players[socket.id];
-		const max = player.team === strings.POKEMON ? 43 : 63;
-		if (newCharacter < 1) {
-			newCharacter = max;
-		} else if (newCharacter > max) {
-			newCharacter = 1;
-		}
+		if (newCharacter < 1) newCharacter = max[player.team];
+		else if (newCharacter > max[player.team]) newCharacter = 1;
 		player.character = newCharacter;
 		io.emit(strings.CHARACTER_CHANGED, {
 			id: socket.id,
@@ -82,14 +98,19 @@ io.on("connection", socket => {
 		const lastTeam = players[socket.id].team;
 		const newTeam =
 			lastTeam === strings.POKEMON ? strings.PEOPLE : strings.POKEMON;
-		if (teams[lastTeam] == 1) return;
+		if (teams[lastTeam] === 1 && playersSize > 1) return;
 		players[socket.id].team = newTeam;
 		players[socket.id].stats = initialStats[newTeam];
 		teams[newTeam]++;
 		teams[lastTeam]--;
+		teams.next =
+			teams.pokemon > teams.people ? strings.PEOPLE : strings.POKEMON;
+		teams.last =
+			teams.next === strings.PEOPLE ? strings.POKEMON : strings.PEOPLE;
 		io.emit(strings.TEAM_CHANGED, {
 			id: socket.id,
-			newTeam: newTeam
+			newTeam: newTeam,
+			newCharacter: Math.floor(Math.random() * max[newTeam]) + 1
 		});
 	});
 
@@ -99,9 +120,8 @@ io.on("connection", socket => {
 		Object.keys(players).forEach(key => {
 			if (players[key].ready) readys++;
 		});
-		if (readys === playersSize) {
-			io.emit(strings.ALL_READY);
-		}
+		if (readys === playersSize)
+			io.emit(strings.ALL_READY, maps[Math.floor(Math.random() * 8)]);
 	});
 
 	socket.on(strings.GAME_LOADED, () => {
@@ -110,14 +130,12 @@ io.on("connection", socket => {
 		Object.keys(players).forEach(key => {
 			if (players[key].loaded) loadeds++;
 		});
-		if (loadeds === playersSize) {
-			io.emit(strings.LOAD_COMPLETE, players);
-		}
+		if (loadeds === playersSize) io.emit(strings.LOAD_COMPLETE, players);
 	});
 
-	socket.on(strings.MOVING_PLAYER, info => {
-		socket.broadcast.emit(strings.PLAYER_MOVED, { id: socket.id, ...info });
-	});
+	socket.on(strings.MOVING_PLAYER, info =>
+		socket.broadcast.emit(strings.PLAYER_MOVED, { id: socket.id, ...info })
+	);
 
 	socket.on(strings.PLANTING_BOMB, info => {
 		socket.emit(strings.BOMB_PLANTED, {
@@ -132,9 +150,12 @@ io.on("connection", socket => {
 		});
 	});
 
-	socket.on(strings.BOMB_EXPLODING, info => {
-		socket.broadcast.emit(strings.BOMB_EXPLODED, { id: socket.id, ...info });
-	});
+	socket.on(strings.BOMB_EXPLODING, info =>
+		socket.broadcast.emit(strings.BOMB_EXPLODED, {
+			id: socket.id,
+			...info
+		})
+	);
 
 	socket.on(strings.DISCONNECT, () => {
 		lobbyPositions[players[socket.id].lobbyPosition].busy = false;
