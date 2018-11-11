@@ -34,6 +34,18 @@ export default class Map {
 		return this.terrain.getTileAtWorldXY(x, y);
 	}
 
+	collidesAtWorldXY(x, y) {
+		return this.collide.hasTileAtWorldXY(x, y);
+	}
+
+	hasRockAtWorldXY(x, y) {
+		return this.rocks.hasTileAtWorldXY(x, y);
+	}
+
+	removeRockAtWorldXY(x, y) {
+		this.rocks.removeTileAtWorldXY(x, y);
+	}
+
 	collideWith(object) {
 		this.scene.physics.world.addCollider(
 			this.collide.setCollisionByProperty({ collides: true }),

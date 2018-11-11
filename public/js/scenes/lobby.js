@@ -142,7 +142,7 @@ export default class Lobby extends Phaser.Scene {
 	pointerDown(button) {
 		if (button === this.playButton) {
 			this.playButton
-				.setText("Esperando a los demás...")
+				.setText("Esperando a los demas...")
 				.setPosition(
 					this.game.config.width / 2.6,
 					this.game.config.height - 100

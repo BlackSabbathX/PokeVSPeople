@@ -1,7 +1,7 @@
 import Socket from "/js/socket.js";
 import Bomb from "/js/graphics/bomb.js";
 import Stats from "/js/graphics/stats.js";
-import { MOVING_PLAYER, PLANTING_BOMB } from "/js/strings.js";
+import { MOVING_PLAYER, PLANTING_BOMB, DIE } from "/js/strings.js";
 
 const TILE_ANIMATION_INFO = {
 	DOWN: { start: 0, end: 3 },
@@ -28,13 +28,15 @@ export default class Player {
 		this.name = name;
 		this.isPokemon = isPokemon;
 		this.quiet = true;
+		this.isAlive = true;
+		this.isPrincipal = isPrincipal;
 		this.map = map;
 		this.stats = new Stats(stats);
 		this.bomb = new Bomb(this.scene, this.stats, this.map);
 		this.sprite = scene.physics.add
 			.sprite(x, y, name)
 			.setScale(isPokemon ? 0.8 : 0.9)
-			.setCollideWorldBounds(true)
+			.setCollideWorldBounds(isPrincipal)
 			.setDepth(999);
 		if (isPokemon) {
 			this.sprite.setSize(30, 20).setOffset(16, 42);
@@ -125,6 +127,7 @@ export default class Player {
 	}
 
 	update() {
+		if (!this.isAlive) return;
 		if (this.cursors.up.isDown) {
 			if (this.cursors.left.isDown) {
 				this.run(
@@ -168,6 +171,12 @@ export default class Player {
 		} else if (this.cursors.down.isDown) {
 			this.run(0, 1, false, ANIMATION_NAME.DOWN);
 		} else this.run(0, 0, false, null);
+	}
+
+	kill() {
+		this.isAlive = false;
+		this.sprite.setTexture(this.name, 12);
+		if (this.isPrincipal) Socket.emit(DIE);
 	}
 
 	destroy() {

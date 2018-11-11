@@ -71,8 +71,6 @@ io.on("connection", socket => {
 	teams[teams.next]++;
 	playersSize++;
 
-	console.log("players", players);
-
 	const tempLast = teams.next;
 	teams.next = teams.last;
 	teams.last = tempLast;
@@ -121,8 +119,10 @@ io.on("connection", socket => {
 			if (players[key].ready) readys++;
 		});
 		if (readys === playersSize)
-			io.emit(strings.ALL_READY, maps[Math.floor(Math.random() * 8)]);
+			io.emit(strings.ALL_READY, maps[7]);
 	});
+
+	//maps[Math.floor(Math.random() * 8)]
 
 	socket.on(strings.GAME_LOADED, () => {
 		players[socket.id].loaded = true;
@@ -151,11 +151,15 @@ io.on("connection", socket => {
 	});
 
 	socket.on(strings.BOMB_EXPLODING, info =>
-		socket.broadcast.emit(strings.BOMB_EXPLODED, {
+		io.emit(strings.BOMB_EXPLODED, {
 			id: socket.id,
 			...info
 		})
 	);
+
+	socket.on(strings.DIE, () => {
+		socket.broadcast.emit(strings.SOMEONE_DIES, socket.id);
+	});
 
 	socket.on(strings.DISCONNECT, () => {
 		lobbyPositions[players[socket.id].lobbyPosition].busy = false;

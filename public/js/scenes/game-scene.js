@@ -9,7 +9,8 @@ import {
 	POKEMON,
 	DISCONNECT,
 	BOMB_PLANTED,
-	BOMB_EXPLODED
+	BOMB_EXPLODED,
+	SOMEONE_DIES
 } from "/js/strings.js";
 
 const EXTRA_FRAME_CONFIG = {
@@ -172,7 +173,12 @@ export default class GameScene extends Phaser.Scene {
 			this.sprites[info.id].putBomb(info);
 		});
 
+		Socket.on(SOMEONE_DIES, id => {
+			this.sprites[id].kill();
+		});
+
 		Socket.on(BOMB_EXPLODED, info => {
+			this.tryToKillMe(info, map);
 			this.sprites[info.id].bomb.explode(info, false);
 		});
 
@@ -184,6 +190,32 @@ export default class GameScene extends Phaser.Scene {
 				delete this.sprites[id];
 			}
 		});
+	}
+
+	tryToKillMe(constraints, map) {
+		const { minX, maxX, minY, maxY, x, y } = constraints;
+		const tile1 = map.getTileAtWorldXY(
+			this.principalPlayer.sprite.x,
+			this.principalPlayer.sprite.y + 15
+		);
+		for (let index = minY; index <= maxY; index++) {
+			const tile2 = map.getTileAtWorldXY(x, y + 32 * index);
+			if (this.sameTile(tile1, tile2)) {
+				this.principalPlayer.kill();
+				return;
+			}
+		}
+		for (let index = minX; index <= maxX; index++) {
+			const tile2 = map.getTileAtWorldXY(x + 32 * index, y);
+			if (this.sameTile(tile1, tile2)) {
+				this.principalPlayer.kill();
+				return;
+			}
+		}
+	}
+
+	sameTile(tile1, tile2) {
+		return tile1.x === tile2.x && tile1.y === tile2.y;
 	}
 
 	update() {

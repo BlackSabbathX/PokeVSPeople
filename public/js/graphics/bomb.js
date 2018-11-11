@@ -23,17 +23,16 @@ export default class Bomb {
 		if (autoExplodes)
 			setTimeout(
 				() =>
-					this.calcMaxins(x, y).then(constraints =>
-						this.explode(constraints, true)
-					),
+					this.calcMaxins(x, y).then(constraints => {
+						if (autoExplodes)
+							Socket.emit(BOMB_EXPLODING, constraints);
+					}),
 				this.stats.explosionTime - 50,
 				this
 			);
 	}
 
 	async calcMaxins(xW, yW) {
-		const collideLayer = this.map.collide;
-		const rocksLayer = this.map.rocks;
 		let constraints = {
 			toBreak: [],
 			x: xW,
@@ -42,10 +41,10 @@ export default class Bomb {
 		let n = 0;
 		for (let x = 1; x <= this.stats.range; x++) {
 			const posX = xW + 32 * x;
-			if (collideLayer.hasTileAtWorldXY(posX, yW)) {
+			if (this.map.collidesAtWorldXY(posX, yW)) {
 				constraints.maxX = x - 1;
 				break;
-			} else if (rocksLayer.hasTileAtWorldXY(posX, yW)) {
+			} else if (this.map.hasRockAtWorldXY(posX, yW)) {
 				constraints.toBreak.push({ x: posX, y: yW });
 				constraints.maxX = x;
 				break;
@@ -54,10 +53,10 @@ export default class Bomb {
 		}
 		for (let x = -1; x >= -this.stats.range; x--) {
 			const posX = xW + 32 * x;
-			if (collideLayer.hasTileAtWorldXY(posX, yW)) {
+			if (this.map.collidesAtWorldXY(posX, yW)) {
 				constraints.minX = x + 1;
 				break;
-			} else if (rocksLayer.hasTileAtWorldXY(posX, yW)) {
+			} else if (this.map.hasRockAtWorldXY(posX, yW)) {
 				constraints.toBreak.push({ x: posX, y: yW });
 				constraints.minX = x;
 				break;
@@ -66,10 +65,10 @@ export default class Bomb {
 		}
 		for (let y = 1; y <= this.stats.range; y++) {
 			const posY = yW + 32 * y;
-			if (collideLayer.hasTileAtWorldXY(xW, posY)) {
+			if (this.map.collidesAtWorldXY(xW, posY)) {
 				constraints.maxY = y - 1;
 				break;
-			} else if (rocksLayer.hasTileAtWorldXY(xW, posY)) {
+			} else if (this.map.hasRockAtWorldXY(xW, posY)) {
 				constraints.toBreak.push({ x: xW, y: posY });
 				constraints.maxY = y;
 				break;
@@ -78,10 +77,10 @@ export default class Bomb {
 		}
 		for (let y = -1; y >= -this.stats.range; y--) {
 			const posY = yW + 32 * y;
-			if (collideLayer.hasTileAtWorldXY(xW, posY)) {
+			if (this.map.collidesAtWorldXY(xW, posY)) {
 				constraints.minY = y + 1;
 				break;
-			} else if (rocksLayer.hasTileAtWorldXY(xW, posY)) {
+			} else if (this.map.hasRockAtWorldXY(xW, posY)) {
 				constraints.toBreak.push({ x: xW, y: posY });
 				constraints.minY = y;
 				break;
@@ -91,12 +90,11 @@ export default class Bomb {
 		return constraints;
 	}
 
-	explode(constraints, autoExplodes) {
-		if (autoExplodes) Socket.emit(BOMB_EXPLODING, constraints);
+	explode(constraints) {
 		this.planted = false;
 		this.scene.cameras.main.shake(500, this.stats.shakeRate);
 		let position = 0;
-		const { minX, maxX, minY, maxY, x, y } = constraints;
+		const { minX, maxX, minY, maxY, x, y, toBreak } = constraints;
 		for (let index = minY; index <= maxY; index++) {
 			if (index !== 0) {
 				let anim = "explosion-mid-v";
@@ -121,11 +119,9 @@ export default class Bomb {
 				position++;
 			}
 		}
-		const { toBreak } = constraints;
-		const rocksLayer = this.map.rocks;
 		for (let index = 0; index < toBreak.length; index++) {
 			const { x, y } = toBreak[index];
-			rocksLayer.removeTileAtWorldXY(x, y);
+			this.map.removeRockAtWorldXY(x, y);
 		}
 		this.sprite.setScale(1).play("explosion-center");
 		this.sprite.once("animationcomplete", this.removeExplosion, this);
