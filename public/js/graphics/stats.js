@@ -6,11 +6,23 @@ export default class Stats {
 	}
 
 	castStats(stats) {
-		this.speedX = stats.speed;
-		this.speedY = stats.speed;
+		this.speed = stats.speed;
 		this.speedNormalizer = 0.7;
 		this.range = stats.range;
 		this.shakeRate = 0.001 * this.range;
 		this.explosionTime = 3000;
+		this.hasHUD = false;
+	}
+
+	buildHUD(scene) {
+		this.hasHUD = true;
+		this.velocityHUD = scene.add
+			.bitmapText(30, 30, "font", `Velocidad: ${this.speed}`, 20)
+			.setDisplayOrigin(0, 0)
+			.setAlpha(0.8);
+		this.rangeHUD = scene.add
+			.bitmapText(30, 60, "font", `Rango de bomba: ${this.range}`, 20)
+			.setDisplayOrigin(0, 0)
+			.setAlpha(0.8);
 	}
 }

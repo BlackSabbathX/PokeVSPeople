@@ -55,18 +55,22 @@ export default class Lobby extends Phaser.Scene {
 			if (id === this.player.id) {
 				this.player.team = newTeam;
 			}
-			this.players[id].team = newTeam;
-			this.players[id].character = newCharacter;
-			this.sprites[id].destroy();
-			delete this.sprites[id];
-			this.createCharacter(this.players[id], spawnPoints);
+			if (this.sprites[id]) {
+				this.players[id].team = newTeam;
+				this.players[id].character = newCharacter;
+				this.sprites[id].destroy();
+				delete this.sprites[id];
+				this.createCharacter(this.players[id], spawnPoints);
+			}
 		});
 
 		Socket.on(DISCONNECT, id => {
-			this.sprites[id].destroy();
-			delete this.sprites[id];
-			delete this.players[id];
-			this.nPlayers--;
+			if (this.sprites[id]) {
+				this.sprites[id].destroy();
+				delete this.sprites[id];
+				delete this.players[id];
+				this.nPlayers--;
+			}
 		});
 
 		Socket.on(ALL_READY, map => {

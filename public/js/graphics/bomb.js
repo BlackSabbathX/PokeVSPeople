@@ -14,7 +14,6 @@ export default class Bomb {
 	}
 
 	putAt(x, y, autoExplodes) {
-		if (this.planted) return false;
 		this.planted = true;
 		this.sprite
 			.enableBody(true, x, y, false, true)
@@ -23,10 +22,9 @@ export default class Bomb {
 		if (autoExplodes)
 			setTimeout(
 				() =>
-					this.calcMaxins(x, y).then(constraints => {
-						if (autoExplodes)
-							Socket.emit(BOMB_EXPLODING, constraints);
-					}),
+					this.calcMaxins(x, y).then(constraints =>
+						Socket.emit(BOMB_EXPLODING, constraints)
+					),
 				this.stats.explosionTime - 50,
 				this
 			);

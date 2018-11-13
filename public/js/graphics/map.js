@@ -11,9 +11,11 @@ export default class Map {
 		this.terrain = this.map.createStaticLayer("terrain", tilesets);
 		if (name !== "lobby") {
 			this.collide = this.map.createStaticLayer("collide", tilesets);
+			if (name === "trainer-tower")
+				this.map.createStaticLayer("pre-collide", tilesets);
 			this.rocks = this.map.createDynamicLayer("rocks", tilesets);
 		}
-		this.map.createStaticLayer("visual", tilesets).setDepth(999999);
+		this.map.createStaticLayer("visual", tilesets).setDepth(999);
 	}
 
 	getSpawnPoints() {

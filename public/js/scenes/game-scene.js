@@ -10,11 +10,13 @@ import {
 	DISCONNECT,
 	BOMB_PLANTED,
 	BOMB_EXPLODED,
-	SOMEONE_DIES
+	SOMEONE_DIES,
+	GAME_OVER,
+	EXIT
 } from "/js/strings.js";
 
 const EXTRA_FRAME_CONFIG = {
-	frameRate: 15,
+	frameRate: 25,
 	repeat: 1
 };
 
@@ -165,6 +167,8 @@ export default class GameScene extends Phaser.Scene {
 			}
 		});
 
+		this.principalPlayer.stats.buildHUD(this);
+
 		Socket.on(PLAYER_MOVED, player => {
 			this.updatePlayer(player);
 		});
@@ -180,6 +184,34 @@ export default class GameScene extends Phaser.Scene {
 		Socket.on(BOMB_EXPLODED, info => {
 			this.tryToKillMe(info, map);
 			this.sprites[info.id].bomb.explode(info, false);
+		});
+
+		Socket.on(
+			GAME_OVER,
+			teamWinner => {
+				this.playerLoaded = false;
+				this.add
+					.bitmapText(
+						this.game.config.width / 2.6,
+						this.game.config.height - 100,
+						"font",
+						"Hola mundo"
+					)
+					.setDepth(9999);
+				this.add
+					.bitmapText(0, -50, "font", `¡¡¡${teamWinner} GANA!!!`)
+					.setDepth(9999);
+			},
+			50
+		);
+
+		Socket.on(EXIT, () => {
+			const cam = this.cameras.main;
+			cam.fadeOut(70);
+			cam.once("camerafadeoutcomplete", () => {
+				this.disableButtonListeners();
+				this.scene.start("menu");
+			});
 		});
 
 		Socket.on(DISCONNECT, id => {
@@ -222,11 +254,14 @@ export default class GameScene extends Phaser.Scene {
 		if (this.playerLoaded) this.principalPlayer.update();
 	}
 
+	disableButtonListeners() {
+		Socket.removeAllListeners();
+	}
+
 	destroy() {
 		Object.keys(this.sprites).forEach(key => {
 			this.sprites[key].destroy();
 		});
 		this.principalPlayer.destroy();
-		Socket.removeAllListeners();
 	}
 }

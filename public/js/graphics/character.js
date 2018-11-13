@@ -9,7 +9,7 @@ export default class Character {
 		this.name = name;
 		this.sprite = scene.physics.add.sprite(x, y, name).setScale(0.9);
 		this.scene.anims.create({
-			key: `character_${name}`,
+			key: `character-${name}`,
 			frames: [
 				{ key: name, frame: 0 },
 				{ key: name, frame: 4 },
@@ -18,11 +18,11 @@ export default class Character {
 			],
 			...EXTRA_ANIM_CONFIG,
 		});
-		this.sprite.play(`character_${name}`, true);
+		this.sprite.play(`character-${name}`, true);
 	}
 
 	destroy() {
+		this.scene.anims.remove(`character-${this.name}`);
 		this.sprite.destroy();
-		this.scene.anims.remove(`character_${this.name}`);
 	}
 }

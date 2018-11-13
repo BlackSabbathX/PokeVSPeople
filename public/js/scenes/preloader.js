@@ -22,6 +22,7 @@ export default class Preloader extends Phaser.Scene {
 	}
 
 	loadAssets() {
+		this.load.bitmapFont('font-2', 'assets/fonts/font-2.png', 'assets/fonts/font-2.fnt');
 		this.load.image('bg-1', 'assets/images/bg.jpg');
 		this.load.image('bike-shop-tileset', 'assets/maps/tileset/bike-shop-tileset.png');
 		this.load.image('caves-tileset', 'assets/maps/tileset/caves-tileset.png');

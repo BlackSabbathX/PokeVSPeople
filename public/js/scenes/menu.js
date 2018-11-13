@@ -22,7 +22,7 @@ export default class Menu extends Phaser.Scene {
 			.setInteractive()
 			.on("pointerover", () => this.pointerOver(this.playButton))
 			.on("pointerout", () => this.pointerOut(this.playButton))
-			.once("pointerdown", () => this.pointerDown(this.playButton));
+			.on("pointerdown", () => this.pointerDown(this.playButton));
 	}
 
 	pointerOver(button) {
@@ -45,6 +45,7 @@ export default class Menu extends Phaser.Scene {
 	disableButtonListeners() {
 		this.playButton.removeAllListeners("pointerover");
 		this.playButton.removeAllListeners("pointerout");
+		this.playButton.removeAllListeners("pointerdown");
 	}
 
 	destroy() {

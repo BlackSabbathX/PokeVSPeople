@@ -37,7 +37,7 @@ export default class Player {
 			.sprite(x, y, name)
 			.setScale(isPokemon ? 0.8 : 0.9)
 			.setCollideWorldBounds(isPrincipal)
-			.setDepth(999);
+			.setDepth(99);
 		if (isPokemon) {
 			this.sprite.setSize(30, 20).setOffset(16, 42);
 		} else {
@@ -99,9 +99,9 @@ export default class Player {
 	}
 
 	run(xfactor, yfactor, flip, anim) {
-		let { speedX, speedY } = this.stats;
-		this.sprite.setVelocityX(speedX * xfactor);
-		this.sprite.setVelocityY(speedY * yfactor);
+		const { speed } = this.stats;
+		this.sprite.setVelocityX(speed * xfactor);
+		this.sprite.setVelocityY(speed * yfactor);
 		if (anim) {
 			this.quiet = false;
 			this.sprite.play(this.name + anim, true);
@@ -175,6 +175,8 @@ export default class Player {
 
 	kill() {
 		this.isAlive = false;
+		this.quiet = true;
+		this.sprite.anims.stop();
 		this.sprite.setTexture(this.name, 12);
 		if (this.isPrincipal) Socket.emit(DIE);
 	}
