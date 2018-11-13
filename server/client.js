@@ -62,6 +62,7 @@ class Client {
 		this.socket.on("TOOGLE_TEAM", this.onToogleTeam.bind(this));
 		this.socket.on("READY", this.onReady.bind(this));
 		this.socket.on("GAME_LOADED", this.onGameLoaded.bind(this));
+		this.socket.on("COLLECT_ITEM", this.onCollect.bind(this));
 		this.socket.on("MOVING_PLAYER", this.onPlayerMoved.bind(this));
 		this.socket.on("PLANTING_BOMB", this.onBombPlanted.bind(this));
 		this.socket.on("BOMB_EXPLODING", this.onBombExploding.bind(this));
@@ -73,6 +74,11 @@ class Client {
 		this.onLobby = true;
 		this.socket.emit("CURRENT_PLAYERS", this.server.getPlayers());
 		this.socket.broadcast.emit("NEW_PLAYER", this.basicInfo());
+	}
+
+	onCollect(item) {
+		this.io.emit("STATS_CHANGED", { ...item.increase, id: this.id, item: item.id });
+		this.server.increaseStats(this.id, item.increase);
 	}
 
 	onChangeCharacter(newCharacter) {
@@ -98,7 +104,10 @@ class Client {
 		this.character = newNewCharacter;
 		if (this.server.size === 1) {
 			this.server.setTeamLength(newTeam, 1, lastTeam, 0, true);
-		} else if (this.server.size === 2 || this.server.teams[lastTeam] === 1) {
+		} else if (
+			this.server.size === 2 ||
+			this.server.teams[lastTeam] === 1
+		) {
 			this.server.updateClient(otherKey, {
 				team: lastTeam,
 				stats: INITIAL_STATS[lastTeam],
@@ -149,7 +158,8 @@ class Client {
 	onBombExploding(info) {
 		this.io.emit("BOMB_EXPLODED", {
 			id: this.id,
-			...info
+			...info,
+			items: this.server.randomItems(info.toBreak)
 		});
 	}
 

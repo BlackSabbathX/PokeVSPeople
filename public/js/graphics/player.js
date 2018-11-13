@@ -1,7 +1,6 @@
 import Socket from "/js/socket.js";
 import Bomb from "/js/graphics/bomb.js";
 import Stats from "/js/graphics/stats.js";
-import { MOVING_PLAYER, PLANTING_BOMB, DIE } from "/js/strings.js";
 
 const TILE_ANIMATION_INFO = {
 	DOWN: { start: 0, end: 3 },
@@ -55,7 +54,7 @@ export default class Player {
 			this.sprite.x,
 			this.sprite.y + 15
 		);
-		Socket.emit(PLANTING_BOMB, {
+		Socket.emit("PLANTING_BOMB", {
 			x: tile.getCenterX(),
 			y: tile.getCenterY()
 		});
@@ -106,7 +105,7 @@ export default class Player {
 			this.quiet = false;
 			this.sprite.play(this.name + anim, true);
 			this.sprite.setFlipX(flip);
-			Socket.emit(MOVING_PLAYER, {
+			Socket.emit("MOVING_PLAYER", {
 				x: this.sprite.x,
 				y: this.sprite.y,
 				flip: flip,
@@ -115,7 +114,7 @@ export default class Player {
 		} else {
 			if (!this.quiet) {
 				this.quiet = true;
-				Socket.emit(MOVING_PLAYER, {
+				Socket.emit("MOVING_PLAYER", {
 					x: this.sprite.x,
 					y: this.sprite.y,
 					flip: flip,
@@ -178,7 +177,7 @@ export default class Player {
 		this.quiet = true;
 		this.sprite.anims.stop();
 		this.sprite.setTexture(this.name, 12);
-		if (this.isPrincipal) Socket.emit(DIE);
+		if (this.isPrincipal) Socket.emit("DIE");
 	}
 
 	destroy() {

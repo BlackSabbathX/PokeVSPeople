@@ -1,18 +1,6 @@
 import Character from "/js/graphics/character.js";
 import Map from "/js/graphics/map.js";
 import Socket from "/js/socket.js";
-import {
-	CURRENT_PLAYERS,
-	NEW_PLAYER,
-	DISCONNECT,
-	CHANGE_CHARACTER,
-	CHARACTER_CHANGED,
-	TEAM_CHANGED,
-	TOOGLE_TEAM,
-	LOBBY_ENTER,
-	READY,
-	ALL_READY
-} from "/js/strings.js";
 
 export default class Lobby extends Phaser.Scene {
 	constructor() {
@@ -26,20 +14,20 @@ export default class Lobby extends Phaser.Scene {
 		const map = new Map(this, "lobby", ["multiplayer-room"]);
 		const spawnPoints = map.getSpawnPoints();
 
-		Socket.on(CURRENT_PLAYERS, players => {
+		Socket.on("CURRENT_PLAYERS", players => {
 			this.players = players;
 			this.nPlayers = Object.keys(players).length;
 			this.createCharacters(spawnPoints);
 			this.player = players[Socket.id()];
 		});
 
-		Socket.on(NEW_PLAYER, player => {
+		Socket.on("NEW_PLAYER", player => {
 			this.players[player.id] = player;
 			this.nPlayers++;
 			this.createCharacter(player, spawnPoints);
 		});
 
-		Socket.on(CHARACTER_CHANGED, change => {
+		Socket.on("CHARACTER_CHANGED", change => {
 			const { id, newCharacter } = change;
 			if (id === this.player.id) {
 				this.player.character = newCharacter;
@@ -50,7 +38,7 @@ export default class Lobby extends Phaser.Scene {
 			this.createCharacter(this.players[id], spawnPoints);
 		});
 
-		Socket.on(TEAM_CHANGED, change => {
+		Socket.on("TEAM_CHANGED", change => {
 			const { id, newTeam, newCharacter } = change;
 			if (id === this.player.id) {
 				this.player.team = newTeam;
@@ -64,7 +52,7 @@ export default class Lobby extends Phaser.Scene {
 			}
 		});
 
-		Socket.on(DISCONNECT, id => {
+		Socket.on("disconnect", id => {
 			if (this.sprites[id]) {
 				this.sprites[id].destroy();
 				delete this.sprites[id];
@@ -73,9 +61,9 @@ export default class Lobby extends Phaser.Scene {
 			}
 		});
 
-		Socket.on(ALL_READY, map => {
+		Socket.on("ALL_READY", map => {
 			const cam = this.cameras.main;
-			cam.shake(200, 0.02);
+			cam.shake(200, 0.01);
 			cam.once("camerashakecomplete", () => {
 				this.disableButtonListeners();
 				this.scene.start("game-scene", map);
@@ -83,15 +71,15 @@ export default class Lobby extends Phaser.Scene {
 		});
 
 		this.input.keyboard.on("keydown_LEFT", () => {
-			Socket.emit(CHANGE_CHARACTER, this.player.character - 1);
+			Socket.emit("CHANGE_CHARACTER", this.player.character - 1);
 		});
 
 		this.input.keyboard.on("keydown_RIGHT", () => {
-			Socket.emit(CHANGE_CHARACTER, this.player.character + 1);
+			Socket.emit("CHANGE_CHARACTER", this.player.character + 1);
 		});
 
 		this.input.keyboard.on("keydown_SPACE", () => {
-			Socket.emit(TOOGLE_TEAM);
+			Socket.emit("TOOGLE_TEAM");
 		});
 		const widthProportion = this.game.config.width / 1920;
 
@@ -106,7 +94,7 @@ export default class Lobby extends Phaser.Scene {
 			.on("pointerout", () => this.pointerOut(this.playButton))
 			.once("pointerdown", () => this.pointerDown(this.playButton));
 
-		Socket.emit(LOBBY_ENTER);
+		Socket.emit("LOBBY_ENTER");
 	}
 
 	createCharacters(spawnPoints) {
@@ -151,7 +139,7 @@ export default class Lobby extends Phaser.Scene {
 					this.game.config.width / 2.6,
 					this.game.config.height - 100
 				);
-			Socket.emit(READY);
+			Socket.emit("READY");
 		}
 	}
 

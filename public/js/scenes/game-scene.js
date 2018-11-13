@@ -1,19 +1,8 @@
 "use strict";
 import Player from "/js/graphics/player.js";
 import Map from "/js/graphics/map.js";
+import Item from "/js/graphics/item.js";
 import Socket from "/js/socket.js";
-import {
-	PLAYER_MOVED,
-	GAME_LOADED,
-	LOAD_COMPLETE,
-	POKEMON,
-	DISCONNECT,
-	BOMB_PLANTED,
-	BOMB_EXPLODED,
-	SOMEONE_DIES,
-	GAME_OVER,
-	EXIT
-} from "/js/strings.js";
 
 const EXTRA_FRAME_CONFIG = {
 	frameRate: 25,
@@ -30,6 +19,7 @@ export default class GameScene extends Phaser.Scene {
 		super({ key: "game-scene" });
 		this.players = {};
 		this.sprites = {};
+		this.items = {};
 		this.principalPlayer = null;
 		this.playerLoaded = false;
 	}
@@ -42,11 +32,11 @@ export default class GameScene extends Phaser.Scene {
 		this.generateBombAnimations();
 		const map = new Map(this, this.map.name, this.map.tilesets);
 		const spawnPoints = map.getSpawnPoints(map);
-		Socket.on(LOAD_COMPLETE, players => {
+		Socket.on("LOAD_COMPLETE", players => {
 			this.players = players;
 			this.createPlayers(map, spawnPoints);
 		});
-		Socket.emit(GAME_LOADED);
+		Socket.emit("GAME_LOADED");
 	}
 
 	generateBombAnimations() {
@@ -140,7 +130,7 @@ export default class GameScene extends Phaser.Scene {
 		Object.keys(this.players).forEach(key => {
 			const p = this.players[key];
 			let sp;
-			if (p.team === POKEMON) {
+			if (p.team === "pokemon") {
 				sp = spawnPoints[ipoke];
 				ipoke++;
 			} else {
@@ -148,7 +138,7 @@ export default class GameScene extends Phaser.Scene {
 				ipeo++;
 			}
 			const characterName = `${p.team}-${p.character}`;
-			const isPokemon = p.team === POKEMON;
+			const isPokemon = p.team === "pokemon";
 			const isPrincipal = key === Socket.id();
 			this.sprites[key] = new Player(
 				this,
@@ -169,52 +159,54 @@ export default class GameScene extends Phaser.Scene {
 
 		this.principalPlayer.stats.buildHUD(this);
 
-		Socket.on(PLAYER_MOVED, player => {
+		Socket.on("PLAYER_MOVED", player => {
 			this.updatePlayer(player);
 		});
 
-		Socket.on(BOMB_PLANTED, info => {
+		Socket.on("STATS_CHANGED", stats => {
+			if (Socket.id() === stats.id)
+				this.principalPlayer.stats.statsChanged(stats);
+			this.items[stats.item].destroy();
+			delete this.items[stats.item];
+		});
+
+		Socket.on("BOMB_PLANTED", info => {
 			this.sprites[info.id].putBomb(info);
 		});
 
-		Socket.on(SOMEONE_DIES, id => {
+		Socket.on("SOMEONE_DIES", id => {
 			this.sprites[id].kill();
 		});
 
-		Socket.on(BOMB_EXPLODED, info => {
+		Socket.on("BOMB_EXPLODED", info => {
 			this.tryToKillMe(info, map);
+			this.showItems(info.items);
 			this.sprites[info.id].bomb.explode(info, false);
 		});
 
-		Socket.on(
-			GAME_OVER,
-			teamWinner => {
-				this.playerLoaded = false;
-				this.add
-					.bitmapText(
-						this.game.config.width / 2.6,
-						this.game.config.height - 100,
-						"font",
-						"Hola mundo"
-					)
-					.setDepth(9999);
-				this.add
-					.bitmapText(0, -50, "font", `¡¡¡${teamWinner} GANA!!!`)
-					.setDepth(9999);
-			},
-			50
-		);
+		Socket.on("GAME_OVER", teamWinner => {
+			this.playerLoaded = false;
+			this.add
+				.bitmapText(
+					this.game.config.width / 3.5,
+					this.game.config.height / 2 - 100,
+					"font",
+					`¡¡¡${teamWinner} GANA!!!`,
+					150
+				)
+				.setDepth(9999);
+		});
 
-		Socket.on(EXIT, () => {
+		Socket.on("EXIT", () => {
 			const cam = this.cameras.main;
-			cam.fadeOut(70);
-			cam.once("camerafadeoutcomplete", () => {
+			cam.shake(200, 0.01);
+			cam.once("camerashakecomplete", () => {
 				this.disableButtonListeners();
 				this.scene.start("menu");
 			});
 		});
 
-		Socket.on(DISCONNECT, id => {
+		Socket.on("disconnect", id => {
 			const sprite = this.sprites[id];
 			if (sprite) {
 				sprite.destroy();
@@ -222,6 +214,16 @@ export default class GameScene extends Phaser.Scene {
 				delete this.sprites[id];
 			}
 		});
+	}
+
+	showItems(items) {
+		for (let index = 0; index < items.length; index++) {
+			this.items[items[index].id] = new Item(
+				this,
+				items[index],
+				this.principalPlayer
+			);
+		}
 	}
 
 	tryToKillMe(constraints, map) {
@@ -247,7 +249,8 @@ export default class GameScene extends Phaser.Scene {
 	}
 
 	sameTile(tile1, tile2) {
-		return tile1.x === tile2.x && tile1.y === tile2.y;
+		if (tile1 && tile2) return tile1.x === tile2.x && tile1.y === tile2.y;
+		return false;
 	}
 
 	update() {

@@ -3,7 +3,6 @@ const express = require("express");
 const app = express();
 const server = require("http").Server(app);
 const io = require("socket.io").listen(server);
-const GameServer = require("./game-server.js");
 
 const Game = {};
 

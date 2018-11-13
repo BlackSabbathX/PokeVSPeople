@@ -5,6 +5,13 @@ export default class Stats {
 		this.castStats(stats);
 	}
 
+	statsChanged(stats) {
+		this.speed += stats.speed;
+		this.range += stats.range;
+		this.shakeRate = 0.001 * this.range;
+		this.updateHud();
+	}
+
 	castStats(stats) {
 		this.speed = stats.speed;
 		this.speedNormalizer = 0.7;
@@ -24,5 +31,10 @@ export default class Stats {
 			.bitmapText(30, 60, "font", `Rango de bomba: ${this.range}`, 20)
 			.setDisplayOrigin(0, 0)
 			.setAlpha(0.8);
+	}
+
+	updateHud() {
+		this.velocityHUD.setText(`Velocidad: ${this.speed}`);
+		this.rangeHUD.setText(`Rango de bomba: ${this.range}`);
 	}
 }

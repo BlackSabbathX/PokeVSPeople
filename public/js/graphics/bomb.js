@@ -1,5 +1,4 @@
 import Socket from "/js/socket.js";
-import { BOMB_EXPLODING } from "/js/strings.js";
 
 export default class Bomb {
 	constructor(scene, stats, map) {
@@ -23,7 +22,7 @@ export default class Bomb {
 			setTimeout(
 				() =>
 					this.calcMaxins(x, y).then(constraints =>
-						Socket.emit(BOMB_EXPLODING, constraints)
+						Socket.emit("BOMB_EXPLODING", constraints)
 					),
 				this.stats.explosionTime - 50,
 				this

@@ -4,7 +4,7 @@ export default class Menu extends Phaser.Scene {
 	}
 
 	create() {
-		this.cameras.main.setBackgroundColor(0xffffff).fadeIn(70);
+		this.cameras.main.setBackgroundColor(0xffffff).shake(200, 0.01);
 		const widthProportion = this.game.config.width / 1920;
 		this.add.image(1920 / 3, 1080 / 3.5, "bg-1").setScale(widthProportion);
 		this.playButton = this.add
@@ -36,7 +36,7 @@ export default class Menu extends Phaser.Scene {
 	pointerDown(button) {
 		const cam = this.cameras.main;
 		if (button === this.playButton) {
-			cam.shake(200, 0.02);
+			cam.shake(200, 0.01);
 			this.disableButtonListeners();
 			cam.once("camerashakecomplete", () => this.scene.start("lobby"));
 		}
