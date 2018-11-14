@@ -20,9 +20,9 @@ const ITEMS = [
   { name: "range-2", increase: { speed: 0, range: 1 } },
   { name: "range-3", increase: { speed: 0, range: 1 } },
   { name: "range-4", increase: { speed: 0, range: 2 } },
-  { name: "speed-1", increase: { speed: 5, range: 0 } },
-  { name: "speed-2", increase: { speed: 5, range: 0 } },
-  { name: "speed-3", increase: { speed: 12, range: 0 } }
+  { name: "speed-1", increase: { speed: 4, range: 0 } },
+  { name: "speed-2", increase: { speed: 4, range: 0 } },
+  { name: "speed-3", increase: { speed: 6, range: 0 } }
 ];
 
 const TEAM_NAMES = {
@@ -121,12 +121,20 @@ class GameServer {
   randomItems(toBreak) {
     const items = [];
     for (let index = 0; index < toBreak.length; index++) {
-      if (Math.random() < 0.4) {
-        const { x, y } = toBreak[index];
+      const rand = Math.random();
+      const { x, y } = toBreak[index];
+      if (rand < 0.1) {
         items.push({
           x: x,
           y: y,
-          ...ITEMS[Math.floor(Math.random() * 7)],
+          ...ITEMS[Math.floor(Math.random() * 4)],
+          id: bombId++
+        });
+      } else if (rand < 0.35) {
+        items.push({
+          x: x,
+          y: y,
+          ...ITEMS[4 + Math.floor(Math.random() * 3)],
           id: bombId++
         });
       }

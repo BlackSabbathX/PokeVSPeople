@@ -5,11 +5,11 @@ export default class Stats {
 		this.castStats(stats);
 	}
 
-	statsChanged(stats) {
+	statsChanged(stats, updateHUD) {
 		this.speed += stats.speed;
 		this.range += stats.range;
-		this.shakeRate = 0.001 * this.range;
-		this.updateHud();
+		this.shakeRate = 0.0005 * this.range;
+		if (updateHUD) this.updateHud();
 	}
 
 	castStats(stats) {

@@ -89,7 +89,7 @@ export default class Bomb {
 
 	explode(constraints) {
 		this.planted = false;
-		this.scene.cameras.main.shake(500, this.stats.shakeRate);
+		this.scene.cameras.main.shake(500, this.stats.shakeRate, true);
 		let position = 0;
 		const { minX, maxX, minY, maxY, x, y, toBreak } = constraints;
 		for (let index = minY; index <= maxY; index++) {

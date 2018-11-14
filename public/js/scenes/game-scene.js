@@ -164,8 +164,10 @@ export default class GameScene extends Phaser.Scene {
 		});
 
 		Socket.on("STATS_CHANGED", stats => {
-			if (Socket.id() === stats.id)
-				this.principalPlayer.stats.statsChanged(stats);
+			this.sprites[stats.id].stats.statsChanged(
+				stats,
+				Socket.id() === stats.id
+			);
 			this.items[stats.item].destroy();
 			delete this.items[stats.item];
 		});
@@ -192,7 +194,7 @@ export default class GameScene extends Phaser.Scene {
 					this.game.config.height / 2 - 100,
 					"font",
 					`¡¡¡${teamWinner} GANA!!!`,
-					150
+					50
 				)
 				.setDepth(9999);
 		});
